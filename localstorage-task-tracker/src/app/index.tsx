@@ -13,15 +13,24 @@ import { Colors, styles } from '../styles/appStyles';
 export default function HomeScreen() {
   const router = useRouter();
   const [allTasks, setAllTasks] = useState<Task[]>([]);
+  const [displayedTasks, setDisplayedTasks] = useState<Task[]>([]);
   const [activeFilter, setActiveFilter] = useState<Filter>('All');
 
+  const [dbReady, setDbReady] = useState(false);
+
   useEffect(() => {
-    initDatabase().then(loadTasks);
+    initDatabase().then(() => setDbReady(true));
   }, []);
 
+  useEffect(() => {
+    if (dbReady) loadTasks();
+  }, [dbReady, activeFilter]);
+
   const loadTasks = async () => {
-    const data = await fetchTasks('All');
-    setAllTasks(data);
+    const status = activeFilter === 'All' ? 'All' : (activeFilter.toLowerCase() as TaskStatus);
+    const [all, filtered] = await Promise.all([fetchTasks('All'), fetchTasks(status)]);
+    setAllTasks(all);
+    setDisplayedTasks(filtered);
   };
 
   const handleAddTask = async (title: string) => {
@@ -38,9 +47,6 @@ export default function HomeScreen() {
     await deleteTask(id);
     loadTasks();
   };
-
-  const displayedTasks =
-    activeFilter === 'All' ? allTasks : allTasks.filter((task) => task.status === activeFilter.toLowerCase());
 
   return (
     <View style={styles.container}>

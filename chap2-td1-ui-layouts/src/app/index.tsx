@@ -1,6 +1,6 @@
 import { Car, Heart, Map, MousePointerClick } from 'lucide-react-native';
 import { useState } from 'react';
-import { Alert, FlatList, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, FlatList, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CardView } from '@/components/CardView';
@@ -12,12 +12,12 @@ import { Destination, destinations, Place, places, vehicles } from '@/services/d
 
 export default function HomeScreen() {
   const [lastChoice, setLastChoice] = useState<string | null>(null);
+  const [webDialogPlace, setWebDialogPlace] = useState<Place | null>(null);
 
   const confirmPlace = (place: Place) => {
     const label = `${place.address}, ${place.city}`;
     if (Platform.OS === 'web') {
-      const go = window.confirm(`Do you want to go to ${label}?`);
-      setLastChoice(go ? `Go there → ${place.city}` : `Cancelled → ${place.city}`);
+      setWebDialogPlace(place);
       return;
     }
     Alert.alert('Confirm your choice', `Do you want to go to ${label}?`, [
@@ -25,6 +25,11 @@ export default function HomeScreen() {
       { text: 'Later', onPress: () => setLastChoice(`Later → ${place.city}`) },
       { text: 'Go there', onPress: () => setLastChoice(`Go there → ${place.city}`) },
     ]);
+  };
+
+  const chooseOnWeb = (choice: string) => {
+    if (webDialogPlace) setLastChoice(`${choice} → ${webDialogPlace.city}`);
+    setWebDialogPlace(null);
   };
 
   const notify = (title: string, message: string) =>
@@ -73,6 +78,28 @@ export default function HomeScreen() {
           </View>
         </View>
       </ScrollView>
+
+      <Modal transparent visible={webDialogPlace !== null} animationType="fade" onRequestClose={() => chooseOnWeb('Cancelled')}>
+        <View style={styles.backdrop}>
+          <View style={styles.dialog}>
+            <Text style={styles.dialogTitle}>Confirm your choice</Text>
+            <Text style={styles.dialogMessage}>
+              Do you want to go to {webDialogPlace?.address}, {webDialogPlace?.city}?
+            </Text>
+            <View style={styles.dialogActions}>
+              <Pressable onPress={() => chooseOnWeb('Cancelled')} style={styles.dialogButton}>
+                <Text style={styles.dialogButtonText}>Cancel</Text>
+              </Pressable>
+              <Pressable onPress={() => chooseOnWeb('Later')} style={styles.dialogButton}>
+                <Text style={styles.dialogButtonText}>Later</Text>
+              </Pressable>
+              <Pressable onPress={() => chooseOnWeb('Go there')} style={styles.dialogButton}>
+                <Text style={styles.dialogButtonText}>Go there</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -101,4 +128,11 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primarySoft,
   },
   hintText: { flex: 1, fontSize: 13, fontWeight: '600', color: Colors.primaryDark },
+  backdrop: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, backgroundColor: 'rgba(15, 23, 42, 0.4)' },
+  dialog: { width: '100%', maxWidth: 360, padding: 20, borderRadius: 16, backgroundColor: Colors.surface },
+  dialogTitle: { fontSize: 17, fontWeight: '700', color: Colors.text },
+  dialogMessage: { marginTop: 8, fontSize: 14, color: Colors.textMuted },
+  dialogActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 4, marginTop: 20 },
+  dialogButton: { paddingVertical: 8, paddingHorizontal: 12, borderRadius: 8 },
+  dialogButtonText: { fontSize: 14, fontWeight: '700', color: Colors.primary },
 });

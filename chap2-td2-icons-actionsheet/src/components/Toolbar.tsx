@@ -1,4 +1,5 @@
-import { EllipsisVertical, Users } from 'lucide-react-native';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { Users } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -18,7 +19,7 @@ export function Toolbar({ title, onMenuPress }: Props) {
         <Text style={styles.title}>{title}</Text>
       </View>
       <Pressable onPress={onMenuPress} hitSlop={10} style={styles.menu} accessibilityLabel="More options">
-        <EllipsisVertical size={22} color="#FFFFFF" />
+        <Ionicons name="ellipsis-vertical-outline" size={22} color="#FFFFFF" />
       </Pressable>
     </View>
   );
